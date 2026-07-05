@@ -1,0 +1,75 @@
+# ── Python ─────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+develop-eggs/
+sdist/
+wheels/
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ── 虚拟环境 ───────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# ── 测试 / 类型检查 / 覆盖率 ──────────
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# ── Jupyter ───────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── IDE / 编辑器 ──────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+
+# ── 敏感信息 / 本地配置 ───────────────
+# 切勿提交真实账号、token、密码
+.env
+.env.*
+!.env.example
+*.secret
+secrets.json
+config_local.py
+
+# ── 操作系统 ──────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# ── 日志 / 运行时 ─────────────────────
+*.log
+logs/
+*.pid
+
+# ── 数据缓存（如有本地下载行情数据）──
+*.dat
+*.bin
+cache/
+data_cache/
