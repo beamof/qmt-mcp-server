@@ -79,7 +79,7 @@ class QMTClient:
         return result
 
     def get_kline(self, stock_code: str, period: str = "1d", count: int = 100,
-                  start_time: str = "", end_time: str = "") -> dict:
+                  start_time: str = "", end_time: str = "") -> list:
         """获取K线数据
 
         Args:
@@ -90,10 +90,9 @@ class QMTClient:
             end_time: 结束时间 "20241231"
 
         Returns:
-            dict: DataFrame 的 to_dict() 结果
+            list: K线记录列表 (每条为 dict)；通过 xtdata 返回的 DataFrame
+                  自身方法 to_dict(orient="records") 转换，无需显式 import pandas。
         """
-        import pandas as pd
-
         if start_time or end_time:
             data = xtdata.get_market_data_ex(
                 [stock_code], period=period,

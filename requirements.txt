@@ -1,0 +1,12 @@
+# QMT MCP Server 依赖
+#
+# 本项目自身仅依赖 Python 3.10+ 标准库（MCP 协议层为内置实现，见 mcp_server_core.py），
+# 无需安装 mcp / pandas 等第三方包。
+#
+# 唯一必需的是 xtquant（miniQMT 自带），它不在 PyPI，需通过以下任一方式提供：
+#   1. 将 miniQMT 安装目录下的 xtquant 加入 PYTHONPATH：
+#      例：set PYTHONPATH=D:\QMT\bin.x64\Lib\site-packages
+#   2. 或将 xtquant 目录拷贝到本项目的 site-packages。
+#
+# 注意：xtquant 内部会 import pandas（行情接口返回 DataFrame），
+# 这是 xtquant 的传递依赖，无需在此声明，安装 xtquant 时 pandas 会随附。

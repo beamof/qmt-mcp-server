@@ -31,18 +31,16 @@
 
 1. **miniQMT 客户端**：必须已安装、启动并登录（行情和交易都依赖 miniQMT 进程）。
 2. **Python 3.10+**
-3. **Python 依赖**：
-   - `mcp`（含 `fastmcp`）
-   - `pandas`
-   - `xtquant`（miniQMT 自带，需将其目录加入 `PYTHONPATH`，或从 miniQMT 安装目录拷贝）
+3. **xtquant**（miniQMT 自带，不在 PyPI）：将 miniQMT 安装目录下的 `xtquant` 加入 `PYTHONPATH`，或拷贝到项目的 `site-packages`。
 
-安装示例：
+> 💡 **本项目自身零第三方依赖**：MCP 协议层用 Python 标准库手写（见 [`mcp_server_core.py`](./mcp_server_core.py)），**无需 `pip install mcp` 或 `pandas`**。
+> （`xtquant` 内部会 import pandas 作为传递依赖，但我们的代码不直接依赖它。）
+
+设置 xtquant 路径（Windows 示例）：
 
 ```bash
-pip install mcp pandas
+set PYTHONPATH=D:\QMT\bin.x64\Lib\site-packages
 ```
-
-`xtquant` 通常位于 miniQMT 安装目录下（如 `XtMiniQmt\bin.x64\Lib\site-packages\xtquant`），可将其加入 `PYTHONPATH`，或拷贝到本项目的 `site-packages`。
 
 ---
 
@@ -57,12 +55,15 @@ pip install mcp pandas
 | `QMT_ACCOUNT_TYPE` | `STOCK` | 账户类型 |
 | `MCP_HOST` | `0.0.0.0` | HTTP 模式监听地址 |
 | `MCP_PORT` | `8765` | HTTP 模式监听端口 |
+| `MCP_API_TOKEN` | （空） | HTTP 模式 API Token，留空则不启用认证；设置后 POST 请求须携带 `Authorization: Bearer <token>` |
 
 建议在启动前导出环境变量：
 
 ```bash
 export QMT_ACCOUNT=你的资金账号
 export QMT_PATH="D:/QMT/userdata_mini"
+# HTTP 模式建议设置 API Token（留空则不启用认证）
+export MCP_API_TOKEN="你的随机 token"
 ```
 
 ---
@@ -79,6 +80,15 @@ python qmt-mcp-server.py
 
 ```bash
 python qmt-mcp-server.py --transport http --host 0.0.0.0 --port 8765
+```
+
+**HTTP API Token 认证**：当设置了 `MCP_API_TOKEN` 环境变量时，所有 POST 请求须携带 `Authorization: Bearer <token>` 头部；GET `/` 健康检查保持公开，但仅返回最少信息（不暴露工具数量）。未设置 token 时认证关闭，向后兼容。客户端调用示例：
+
+```bash
+curl -X POST http://host:8765/ \
+  -H "Authorization: Bearer <你的 token>" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
 ---
@@ -118,9 +128,11 @@ http://<host>:8765/sse
 
 ```
 mcp_server/
-├── qmt-mcp-server.py   # MCP Server 入口，定义所有工具/资源
+├── qmt-mcp-server.py   # MCP Server 入口，定义所有工具/资源（业务层）
+├── mcp_server_core.py  # 轻量 MCP 协议层（纯标准库，stdio + HTTP）
 ├── qmt_client.py       # QMT 客户端封装（xtdata 行情 + xttrader 交易），单例
 ├── config.py           # 配置项（环境变量读取）
+├── requirements.txt    # 依赖说明（项目自身零第三方依赖）
 ├── ord_attrs.txt       # 委托对象字段参考
 ├── pos_attrs.txt       # 持仓对象字段参考
 ├── trd_attrs.txt       # 成交对象字段参考

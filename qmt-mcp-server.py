@@ -3,10 +3,12 @@
 QMT MCP Server — 将 miniQMT 常用接口封装为 MCP 工具
 
 用法 (stdio 模式, 供 Hermes 通过 SSH 调用):
-    python server.py
+    python qmt-mcp-server.py
 
 用法 (HTTP 模式, 独立运行):
-    python server.py --transport http --port 8765
+    python qmt-mcp-server.py --transport http --port 8765
+
+注: 仅依赖 Python 标准库 + xtquant，无需安装 mcp / pandas 等第三方包。
 """
 
 import sys
@@ -17,19 +19,20 @@ import json
 # 确保能 import 同目录模块
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from mcp.server.fastmcp import FastMCP
 from xtquant import xtconstant
 
+from mcp_server_core import init_server, tool, resource, run_stdio, run_http
 from qmt_client import get_client
-from config import MCP_HOST, MCP_PORT
+from config import MCP_HOST, MCP_PORT, MCP_API_TOKEN
 
-# ──────────────── 创建 MCP Server ────────────────
+# ──────────────── 初始化 MCP Server ────────────────
 
-mcp = FastMCP(
+init_server(
     name="qmt",
+    version="1.0.0",
     instructions="QMT 迷你量化交易系统 MCP 服务。提供 A 股行情查询、账户查询、交易下单等功能。"
                  "股票代码格式: {代码}.{市场}，如 600519.SH、000001.SZ。"
-                 "miniQMT 客户端必须处于运行登录状态。"
+                 "miniQMT 客户端必须处于运行登录状态。",
 )
 
 
@@ -37,7 +40,7 @@ mcp = FastMCP(
 #                  行情查询工具
 # ══════════════════════════════════════════════════
 
-@mcp.tool()
+@tool()
 def get_stock_quote(stock_codes: str) -> str:
     """获取股票实时行情快照。输入股票代码，逗号分隔，如 "600519.SH,000001.SZ"。
 
@@ -75,7 +78,7 @@ def get_stock_quote(stock_codes: str) -> str:
         return f"获取行情失败: {e}"
 
 
-@mcp.tool()
+@tool()
 def get_kline_data(stock_code: str, period: str = "1d", count: int = 100,
                    start_time: str = "", end_time: str = "") -> str:
     """获取股票历史K线数据。
@@ -115,7 +118,7 @@ def get_kline_data(stock_code: str, period: str = "1d", count: int = 100,
         return f"获取K线失败: {e}"
 
 
-@mcp.tool()
+@tool()
 def get_instrument_detail(stock_code: str) -> str:
     """获取证券详细信息，包括名称、涨跌停价、交易状态等。
 
@@ -142,7 +145,7 @@ def get_instrument_detail(stock_code: str) -> str:
         return f"获取证券详情失败: {e}"
 
 
-@mcp.tool()
+@tool()
 def get_stock_list(market: int = -1) -> str:
     """获取沪深A股股票列表。
 
@@ -173,7 +176,7 @@ def get_stock_list(market: int = -1) -> str:
 #                  账户查询工具
 # ══════════════════════════════════════════════════
 
-@mcp.tool()
+@tool()
 def get_account_asset() -> str:
     """查询 QMT 账户资产信息，包括总资产、可用资金、持仓市值、冻结资金。
 
@@ -197,7 +200,7 @@ def get_account_asset() -> str:
         return f"查询资产失败: {e}"
 
 
-@mcp.tool()
+@tool()
 def get_positions() -> str:
     """查询 QMT 账户当前持仓列表，包括股票代码、持仓数量、成本价、市值、盈亏等。
 
@@ -227,7 +230,7 @@ def get_positions() -> str:
         return f"查询持仓失败: {e}"
 
 
-@mcp.tool()
+@tool()
 def get_orders() -> str:
     """查询 QMT 当日委托列表，包括委托代码、价格、数量、状态等。
 
@@ -253,7 +256,7 @@ def get_orders() -> str:
         return f"查询委托失败: {e}"
 
 
-@mcp.tool()
+@tool()
 def get_trades() -> str:
     """查询 QMT 当日成交列表，包括成交代码、价格、数量、金额等。
 
@@ -287,7 +290,7 @@ def get_trades() -> str:
 #                  交易操作工具
 # ══════════════════════════════════════════════════
 
-@mcp.tool()
+@tool()
 def place_order(stock_code: str, direction: str, price: float, volume: int,
                 strategy_name: str = "") -> str:
     """提交买卖委托订单。
@@ -343,7 +346,7 @@ def place_order(stock_code: str, direction: str, price: float, volume: int,
         return f"下单失败: {e}"
 
 
-@mcp.tool()
+@tool()
 def cancel_order(order_id: int) -> str:
     """撤销指定委托订单。
 
@@ -375,7 +378,7 @@ def cancel_order(order_id: int) -> str:
 #                  辅助资源
 # ══════════════════════════════════════════════════
 
-@mcp.resource("qmt://info")
+@resource("qmt://info")
 def qmt_info() -> str:
     """QMT 服务基本信息和连接状态"""
     import config
@@ -407,9 +410,9 @@ def main():
     args = parser.parse_args()
 
     if args.transport == "http":
-        mcp.run(transport="sse", host=args.host, port=args.port)
+        run_http(args.host, args.port, api_token=MCP_API_TOKEN)
     else:
-        mcp.run(transport="stdio")
+        run_stdio()
 
 
 if __name__ == "__main__":
